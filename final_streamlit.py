@@ -11,16 +11,16 @@ import matplotlib.pyplot as plt
 import folium
 import base64
 
+# Initialize session state
+st.session_state.sync = True
+st.session_state.allow_access = True
+
 # Memuat model regresi linear yang telah disimpan
 loaded_regressor = joblib.load('model_RandomForest.pkl')
 loaded_rf_regressor = joblib.load('model_regresi_linear.pkl')
 
 # Load Earthquakes.csv into a pandas DataFrame
 gempa_dataset = pd.read_csv('Earthquakes.csv')
-
-# Initialize session state
-st.session_state.sync = True
-st.session_state.allow_access = True
 
 app = hy.HydraApp(title='Earthquake Prediction App')
 

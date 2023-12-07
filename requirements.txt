@@ -1,1 +1,2 @@
 hydralit @ git+https://predict@github.com/hydralit/hydralit.git@main
+pip==latest

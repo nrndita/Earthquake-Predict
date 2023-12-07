@@ -1,1 +1,1 @@
-git+https://streamlit:@github.com/hydralit/hydralit.git@main#egg=hydralit
+hydralit @ git+https://predict@github.com/hydralit/hydralit.git@main

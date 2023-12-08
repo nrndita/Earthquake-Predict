@@ -1,2 +1,2 @@
-hydralit @ git+https://predict@github.com/hydralit/hydralit.git@main
-pip==latest
+# requirements.txt
+git+https://github.com/hydralit/hydralit.git@main

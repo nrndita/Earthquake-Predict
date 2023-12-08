@@ -1,2 +1,2 @@
 # requirements.txt
-git+https://github.com/hydralit/hydralit.git@main
+git+https://github.com/tanglespace/hydralit.git@main

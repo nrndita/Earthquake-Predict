@@ -167,19 +167,19 @@ def latest_earthquakes():
         hy.markdown("")
         hy.markdown("")
         
-        # Membuat peta dengan marker gempa
-        hy.subheader('Map with Markers')
-        m = folium.Map(location=[-2, 120], zoom_start=5)
-        for gempa in data_list:
-            magnitudo = float(gempa["Magnitudo"])
-            koordinat = [float(coord) for coord in gempa["Koordinat"].split(',')]
-            lokasi = gempa["Lokasi"]
-            folium.Marker(location=koordinat, popup=f"Magnitudo: {magnitudo}\nLokasi: {lokasi}").add_to(m)
-        m.save('gempa_map.html')
+        # # Membuat peta dengan marker gempa
+        # hy.subheader('Map with Markers')
+        # m = folium.Map(location=[-2, 120], zoom_start=5)
+        # for gempa in data_list:
+        #     magnitudo = float(gempa["Magnitudo"])
+        #     koordinat = [float(coord) for coord in gempa["Koordinat"].split(',')]
+        #     lokasi = gempa["Lokasi"]
+        #     folium.Marker(location=koordinat, popup=f"Magnitudo: {magnitudo}\nLokasi: {lokasi}").add_to(m)
+        # m.save('gempa_map.html')
 
-        # Use st.components.html to embed the HTML file
-        iframe_html = '<iframe src="data:text/html;base64,' + base64.b64encode(open('gempa_map.html', 'r').read().encode()).decode() + '" width=800 height=600></iframe>'
-        st.components.v1.html(iframe_html, width=750, height=600)
+        # # Use st.components.html to embed the HTML file
+        # iframe_html = '<iframe src="data:text/html;base64,' + base64.b64encode(open('gempa_map.html', 'r').read().encode()).decode() + '" width=800 height=600></iframe>'
+        # st.components.v1.html(iframe_html, width=750, height=600)
         
     with col2:
         # Scatter Plot Kedalaman vs. Magnitudo:

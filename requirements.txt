@@ -2,6 +2,6 @@
 git+https://github.com/tanglespace/hydralit.git@main
 joblib==1.3.2
 scikit-learn==1.2.2
-matplotlib==3.7.1
+matplotlib==3.4.3  # Use a valid version, or use the latest version compatible with your other dependencies
 folium==0.15.0
-streamlit >= 1.29.0
+streamlit>=1.29.0

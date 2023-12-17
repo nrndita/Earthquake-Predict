@@ -22,6 +22,22 @@ loaded_rf_regressor = joblib.load('model_regresi_linear.pkl')
 # Load Earthquakes.csv into a pandas DataFrame
 gempa_dataset = pd.read_csv('Earthquakes.csv')
 
+# Mapping between Indonesian month names and English abbreviations
+month_mapping = {
+    'Jan': 'Jan',
+    'Feb': 'Feb',
+    'Mar': 'Mar',
+    'Apr': 'Apr',
+    'Mei': 'May',  # 'Mei' is the Indonesian spelling for May
+    'Jun': 'Jun',
+    'Jul': 'Jul',
+    'Agu': 'Aug',  # 'Agu' is the Indonesian spelling for Aug
+    'Sep': 'Sep',
+    'Okt': 'Oct',  # 'Okt' is the Indonesian spelling for Oct
+    'Nov': 'Nov',
+    'Des': 'Dec'   # 'Des' is the Indonesian spelling for Dec
+}
+
 app = hy.HydraApp(title='Earthquake Prediction App')
 
 @app.addapp(title='HOME', icon="🏠")
@@ -141,6 +157,11 @@ def latest_earthquakes():
             })
             i += 1
 
+        # Replace Indonesian month names with English abbreviations
+        tanggal_values = [
+            datetime.strptime(gempa["Tanggal"], "%d %b %Y".replace(month, month_mapping[month])) for gempa in data_list
+        ]
+        
         if hy.checkbox('Show the latest earthquake data'):
             hy.subheader('Raw data')
             hy.table(data_list)

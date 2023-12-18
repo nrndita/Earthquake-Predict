@@ -22,22 +22,6 @@ loaded_rf_regressor = joblib.load('model_regresi_linear.pkl')
 # Load Earthquakes.csv into a pandas DataFrame
 gempa_dataset = pd.read_csv('Earthquakes.csv')
 
-# Mapping between Indonesian month names and English abbreviations
-month_mapping = {
-    'Jan': 'Jan',
-    'Feb': 'Feb',
-    'Mar': 'Mar',
-    'Apr': 'Apr',
-    'Mei': 'May',  # 'Mei' is the Indonesian spelling for May
-    'Jun': 'Jun',
-    'Jul': 'Jul',
-    'Agu': 'Aug',  # 'Agu' is the Indonesian spelling for Aug
-    'Sep': 'Sep',
-    'Okt': 'Oct',  # 'Okt' is the Indonesian spelling for Oct
-    'Nov': 'Nov',
-    'Des': 'Dec'   # 'Des' is the Indonesian spelling for Dec
-}
-
 app = hy.HydraApp(title='Earthquake Prediction App')
 
 @app.addapp(title='HOME', icon="🏠")
@@ -123,149 +107,117 @@ def regression_prediction():
     with dol3:
         hy.markdown("")    
 
-# @app.addapp(title='EARTHQUAKE UPDATE', icon="📌")
-# def latest_earthquakes():
-#     hy.markdown("<h2 style='text-align: center;'>Update Earthquake Information (M ≥ 5.0)</h2>", unsafe_allow_html=True)
-#     hy.markdown("")
-#     hy.markdown("")
-#     hy.markdown("")
+@app.addapp(title='EARTHQUAKE UPDATE', icon="📌")
+def latest_earthquakes():
+    hy.markdown("<h2 style='text-align: center;'>Update Earthquake Information (M ≥ 5.0)</h2>", unsafe_allow_html=True)
+    hy.markdown("")
+    hy.markdown("")
+    hy.markdown("")
+    hy.markdown("")
 
-#     # Initialize data_list outside the try block
-#     data_list = []
+    # Fetch data from BMKG
+    url = "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.xml"
+    response = requests.get(url)
 
-#     # Fetch data from BMKG
-#     url = "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.xml"
-    
-#     try:
-#         response = requests.get(url)
+    if response.status_code == 200:
+        # Parse XML data
+        data = ET.fromstring(response.content)
 
-#         if response.status_code == 200:
-#             # Parse XML data
-#             data = ET.fromstring(response.content)
+        data_list = []
+        i = 1
+        for gempaM5 in data.findall('.//gempa'):
+            data_list.append({
+                "No": i,
+                "Tanggal": gempaM5.find('Tanggal').text,
+                "Jam": gempaM5.find('Jam').text,
+                "DateTime": gempaM5.find('DateTime').text,
+                "Magnitudo": gempaM5.find('Magnitude').text,
+                "Kedalaman": gempaM5.find('Kedalaman').text,
+                "Koordinat": gempaM5.find('point/coordinates').text,
+                "Lintang": gempaM5.find('Lintang').text,
+                "Bujur": gempaM5.find('Bujur').text,
+                "Lokasi": gempaM5.find('Wilayah').text,
+                "Potensi": gempaM5.find('Potensi').text
+            })
+            i += 1
 
-#             i = 1
-#             for gempaM5 in data.findall('.//gempa'):
-#                 data_list.append({
-#                     "No": i,
-#                     "Tanggal": gempaM5.find('Tanggal').text,
-#                     "Jam": gempaM5.find('Jam').text,
-#                     "DateTime": gempaM5.find('DateTime').text,
-#                     "Magnitudo": gempaM5.find('Magnitude').text,
-#                     "Kedalaman": gempaM5.find('Kedalaman').text,
-#                     "Koordinat": gempaM5.find('point/coordinates').text,
-#                     "Lintang": gempaM5.find('Lintang').text,
-#                     "Bujur": gempaM5.find('Bujur').text,
-#                     "Lokasi": gempaM5.find('Wilayah').text,
-#                     "Potensi": gempaM5.find('Potensi').text
-#                 })
-#                 i += 1
+        if hy.checkbox('Show the latest earthquake data'):
+            hy.subheader('Raw data')
+            hy.table(data_list)
+    else:
+        hy.write("Failed to fetch data from BMKG.")
+        
+    hy.markdown("")
+    hy.markdown("")
+    hy.markdown("")
+    col1, col2 = hy.columns(2)
+    with col1:
+        # Histogram atau Bar Chart Magnitudo:
+        hy.subheader('Histogram of the Earthquake Magnitude')
+        magnitudo_values = [float(gempa["Magnitudo"]) for gempa in data_list]
+        plt.figure(figsize=(10, 6))
+        plt.hist(magnitudo_values, bins=10, color='skyblue', edgecolor='black')
+        plt.xlabel('Magnitudo')
+        plt.ylabel('Jumlah Kejadian')
+        plt.grid(axis='y', alpha=0.75)
+        hy.pyplot(plt)
+        
+        hy.markdown("")
+        hy.markdown("")
+        hy.markdown("")
+        hy.markdown("")
+        
+        # Membuat peta dengan marker gempa
+        hy.subheader('Map with Markers')
+        m = folium.Map(location=[-2, 120], zoom_start=5)
+        for gempa in data_list:
+            magnitudo = float(gempa["Magnitudo"])
+            koordinat = [float(coord) for coord in gempa["Koordinat"].split(',')]
+            lokasi = gempa["Lokasi"]
+            folium.Marker(location=koordinat, popup=f"Magnitudo: {magnitudo}\nLokasi: {lokasi}").add_to(m)
+        m.save('gempa_map.html')
 
-#             # Replace Indonesian month names with English abbreviations
-#             tanggal_values = [
-#                 datetime.strptime(gempa["Tanggal"].replace('Jan', 'Jan').replace('Feb', 'Feb').replace('Mar', 'Mar')
-#                                                         .replace('Apr', 'Apr').replace('Mei', 'May').replace('Jun', 'Jun')
-#                                                         .replace('Jul', 'Jul').replace('Agu', 'Aug').replace('Sep', 'Sep')
-#                                                         .replace('Okt', 'Oct').replace('Nov', 'Nov').replace('Des', 'Dec'), "%d %b %Y")
-#                 for gempa in data_list
-#             ]
+        # Use st.components.html to embed the HTML file
+        iframe_html = '<iframe src="data:text/html;base64,' + base64.b64encode(open('gempa_map.html', 'r').read().encode()).decode() + '" width=800 height=600></iframe>'
+        st.components.v1.html(iframe_html, width=750, height=600)
+        
+    with col2:
+        # Scatter Plot Kedalaman vs. Magnitudo:
+        hy.subheader('Scatter Plot Depth vs. Magnitudo')
+        kedalaman_values = [float(gempa["Kedalaman"].split()[0]) for gempa in data_list]
+        magnitudo_values = [float(gempa["Magnitudo"]) for gempa in data_list]
 
-#             if hy.checkbox('Show the latest earthquake data'):
-#                 hy.subheader('Raw data')
-#                 hy.table(data_list)
-#         else:
-#             hy.write(f"Failed to fetch data from BMKG. Status code: {response.status_code}")
+        plt.figure(figsize=(10, 6))
+        plt.scatter(kedalaman_values, magnitudo_values, alpha=0.5)
+        plt.xlabel('Kedalaman (km)')
+        plt.ylabel('Magnitudo')
+        plt.grid(True)
+        hy.pyplot(plt)
+        
+        hy.markdown("")
+        hy.markdown("")
+        hy.markdown("")
+        hy.markdown("")
+        
+        # Time Series Plot:
+        hy.subheader('Time Series Plot - Number of Earthquakes Over Time')
+        tanggal_values = []
+
+        for gempa in data_list:
+            date_str = gempa["DateTime"]
             
-#     except requests.exceptions.RequestException as e:
-#         hy.write(f"Failed to fetch data from BMKG. Error: {e}")
-        
-#     hy.markdown("")
-#     hy.markdown("")
-#     hy.markdown("")
-#     col1, col2 = hy.columns(2)
-#     with col1:
-#         # Histogram atau Bar Chart Magnitudo:
-#         hy.subheader('Histogram of the Earthquake Magnitude')
-#         magnitudo_values = [float(gempa["Magnitudo"]) for gempa in data_list]
-#         plt.figure(figsize=(10, 6))
-#         plt.hist(magnitudo_values, bins=10, color='skyblue', edgecolor='black')
-#         plt.xlabel('Magnitudo')
-#         plt.ylabel('Jumlah Kejadian')
-#         plt.grid(axis='y', alpha=0.75)
-#         hy.pyplot(plt)
-        
-#         hy.markdown("")
-#         hy.markdown("")
-#         hy.markdown("")
-#         hy.markdown("")
-        
-#         # Membuat peta dengan marker gempa
-#         hy.subheader('Map with Markers')
-#         m = folium.Map(location=[-2, 120], zoom_start=5)
-#         for gempa in data_list:
-#             magnitudo = float(gempa["Magnitudo"])
-#             koordinat = [float(coord) for coord in gempa["Koordinat"].split(',')]
-#             lokasi = gempa["Lokasi"]
-#             folium.Marker(location=koordinat, popup=f"Magnitudo: {magnitudo}\nLokasi: {lokasi}").add_to(m)
-#         m.save('gempa_map.html')
+            # Parsing the date string to handle the provided format
+            parsed_date = datetime.strptime(date_str.split("T")[0], "%Y-%m-%d")
+            tanggal_values.append(parsed_date)
 
-#         # Use st.components.html to embed the HTML file
-#         iframe_html = '<iframe src="data:text/html;base64,' + base64.b64encode(open('gempa_map.html', 'r').read().encode()).decode() + '" width=800 height=600></iframe>'
-#         st.components.v1.html(iframe_html, width=750, height=600)
-        
-#     with col2:
-#         # Scatter Plot Kedalaman vs. Magnitudo:
-#         hy.subheader('Scatter Plot Depth vs. Magnitudo')
-#         kedalaman_values = [float(gempa["Kedalaman"].split()[0]) for gempa in data_list]
-#         magnitudo_values = [float(gempa["Magnitudo"]) for gempa in data_list]
+        jumlah_gempa = range(1, len(tanggal_values) + 1)
 
-#         plt.figure(figsize=(10, 6))
-#         plt.scatter(kedalaman_values, magnitudo_values, alpha=0.5)
-#         plt.xlabel('Kedalaman (km)')
-#         plt.ylabel('Magnitudo')
-#         plt.grid(True)
-#         hy.pyplot(plt)
-        
-#         hy.markdown("")
-#         hy.markdown("")
-#         hy.markdown("")
-#         hy.markdown("")
-        
-#         # Print the "Tanggal" values to check their format
-#         for gempa in data_list:
-#             print(gempa["Tanggal"])
-
-#         # Time Series Plot:
-#         hy.subheader('Time Series Plot - Number of Earthquakes Over Time')
-#         tanggal_values_str = [gempa["Tanggal"] for gempa in data_list]
-
-#         # Print the "tanggal_values_str" to check the format
-#         print("Tanggal Values (String Format):", tanggal_values_str)
-
-#         # Update the date parsing based on the actual format of "Tanggal" values
-#         tanggal_values = []
-#         for tanggal_str in tanggal_values_str:
-#             parts = tanggal_str.split(' ')
-#             day = parts[0]
-#             month = month_mapping.get(parts[1], parts[1])
-#             year = parts[2]
-#             formatted_date_str = f"{day} {month} {year}"
-            
-#             try:
-#                 tanggal_values.append(datetime.strptime(formatted_date_str, "%d %b %Y"))
-#             except ValueError as e:
-#                 print(f"Error parsing date '{tanggal_str}': {e}")
-
-#         # Print the parsed dates to check for errors
-#         print("Parsed Dates:", tanggal_values)
-
-#         jumlah_gempa = range(1, len(tanggal_values) + 1)
-
-#         plt.figure(figsize=(10, 6))
-#         plt.plot(tanggal_values, jumlah_gempa, marker='o')
-#         plt.xlabel('Tanggal')
-#         plt.ylabel('Jumlah Gempa')
-#         plt.grid(True)
-#         hy.pyplot(plt)
+        plt.figure(figsize=(10, 6))
+        plt.plot(tanggal_values, jumlah_gempa, marker='o')
+        plt.xlabel('Tanggal')
+        plt.ylabel('Jumlah Gempa')
+        plt.grid(True)
+        hy.pyplot(plt)
 
 
         
